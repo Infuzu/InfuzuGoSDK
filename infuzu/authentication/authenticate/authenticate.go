@@ -1,6 +1,10 @@
 package infuzu
 
 import (
+	application "InfuzuGOSDK/infuzu/authentication/applications"
+	base "InfuzuGOSDK/infuzu/authentication/base"
+	requests "InfuzuGOSDK/infuzu/authentication/requests"
+	shortcuts "InfuzuGOSDK/infuzu/authentication/shortcuts"
 	"errors"
 )
 
@@ -9,17 +13,17 @@ func VerifyDiverseMessageSignature(message string, signature string, publicKey i
 	var err error
 
 	switch pk := publicKey.(type) {
-	case *AuthenticationKey:
+	case *requests.AuthenticationKey:
 		if pk.PublicKeyB64 == nil {
 			return false, errors.New("invalid public key base64")
 		}
 		publicKeyB64 = *pk.PublicKeyB64
-	case *IPublicKey:
+	case *base.IPublicKey:
 		publicKeyB64, err = pk.ToBase64()
 		if err != nil {
 			return false, err
 		}
-	case IKeys:
+	case base.IKeys:
 		publicKeyB64, err = pk.PublicKey.ToBase64()
 		if err != nil {
 			return false, err
@@ -34,13 +38,13 @@ func VerifyDiverseMessageSignature(message string, signature string, publicKey i
 		return false, errors.New("public key base64 is empty")
 	}
 
-	return VerifyMessageSignature(message, signature, publicKeyB64)
+	return shortcuts.VerifyMessageSignature(message, signature, publicKeyB64)
 }
 
-func ConvertMessageSignatureToApplicationAndVerify(signature string, message string) (*Application, error) {
+func ConvertMessageSignatureToApplicationAndVerify(signature string, message string) (*requests.Application, error) {
 	var pairID string
 	var err error
-	pairID, err = GetKeyPairIDFromSignature(signature)
+	pairID, err = shortcuts.GetKeyPairIDFromSignature(signature)
 	if err != nil {
 		return nil, err
 	}
@@ -48,8 +52,8 @@ func ConvertMessageSignatureToApplicationAndVerify(signature string, message str
 		return nil, errors.New("invalid signature")
 	}
 
-	var authenticationKey *AuthenticationKey
-	authenticationKey, err = GetApplicationInformation(pairID)
+	var authenticationKey *requests.AuthenticationKey
+	authenticationKey, err = application.GetApplicationInformation(pairID)
 	if err != nil {
 		return nil, err
 	}
@@ -70,12 +74,12 @@ func ConvertMessageSignatureToApplicationAndVerify(signature string, message str
 }
 
 func ApplicationIsValid(application interface{}) bool {
-	_, ok := application.(*Application)
+	_, ok := application.(*requests.Application)
 	return ok
 }
 
 func ApplicationIsInternal(application interface{}) bool {
-	app, ok := application.(*Application)
+	app, ok := application.(*requests.Application)
 	if !ok {
 		return false
 	}
@@ -83,7 +87,7 @@ func ApplicationIsInternal(application interface{}) bool {
 }
 
 func ApplicationIsInList(application interface{}, appIDs []string) bool {
-	app, ok := application.(*Application)
+	app, ok := application.(*requests.Application)
 	if !ok {
 		return false
 	}

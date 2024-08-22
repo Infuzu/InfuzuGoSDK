@@ -1,7 +1,7 @@
 package infuzu
 
 import (
-	auth "InfuzuGOSDK/infuzu/authentication"
+	auth "InfuzuGOSDK/infuzu/authentication/shortcuts"
 	"bytes"
 	"encoding/json"
 	"net/http"
@@ -48,6 +48,9 @@ func (s *signatureSession) Request(
 
 	var signature string
 	signature, err = auth.GenerateMessageSignature(string(requestBody), &privateKeyStr)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Set(auth.SignatureHeaderName, signature)
 
 	for key, value := range headers {

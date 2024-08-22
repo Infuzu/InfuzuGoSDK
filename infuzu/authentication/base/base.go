@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"time"
 )
@@ -29,7 +30,7 @@ type IPublicKey struct {
 
 func (pk *IPublicKey) ToBase64() (string, error) {
 	publicKeyBytes := elliptic.MarshalCompressed(pk.PublicKey.Curve, pk.PublicKey.X, pk.PublicKey.Y)
-	publicKeyStr := base64.RawURLEncoding.EncodeToString(publicKeyBytes)
+	publicKeyStr := base64.URLEncoding.EncodeToString(publicKeyBytes)
 	publicKeyMap := map[string]string{
 		"u": publicKeyStr,
 		"i": pk.KeyPairID,
@@ -38,13 +39,13 @@ func (pk *IPublicKey) ToBase64() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return base64.RawURLEncoding.EncodeToString(publicKeyJson), nil
+	return base64.URLEncoding.EncodeToString(publicKeyJson), nil
 }
 
 func (pk *IPublicKey) FromBase64(encoded string) error {
 	var decodedBytes []byte
 	var err error
-	decodedBytes, err = base64.RawURLEncoding.DecodeString(encoded)
+	decodedBytes, err = base64.URLEncoding.DecodeString(encoded)
 	if err != nil {
 		return err
 	}
@@ -56,7 +57,7 @@ func (pk *IPublicKey) FromBase64(encoded string) error {
 	publicKeyStr := publicKeyMap["u"]
 	pk.KeyPairID = publicKeyMap["i"]
 	var publicKeyBytes []byte
-	publicKeyBytes, err = base64.RawURLEncoding.DecodeString(publicKeyStr)
+	publicKeyBytes, err = base64.URLEncoding.DecodeString(publicKeyStr)
 	if err != nil {
 		return err
 	}
@@ -84,7 +85,7 @@ func (sk *IPrivateKey) ToBase64() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	privateKeyStr := base64.RawURLEncoding.EncodeToString(privateKeyBytes)
+	privateKeyStr := base64.URLEncoding.EncodeToString(privateKeyBytes)
 	privateKeyMap := map[string]string{
 		"u": privateKeyStr,
 		"i": sk.KeyPairID,
@@ -94,33 +95,38 @@ func (sk *IPrivateKey) ToBase64() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return base64.RawURLEncoding.EncodeToString(privateKeyJson), nil
+	return base64.URLEncoding.EncodeToString(privateKeyJson), nil
 }
 
 func (sk *IPrivateKey) FromBase64(encoded string) error {
 	var err error
 	var decodedBytes []byte
-	decodedBytes, err = base64.RawURLEncoding.DecodeString(encoded)
+	decodedBytes, err = base64.URLEncoding.DecodeString(encoded)
 	if err != nil {
 		return err
 	}
+
 	var privateKeyMap map[string]string
 	err = json.Unmarshal(decodedBytes, &privateKeyMap)
 	if err != nil {
 		return err
 	}
-	privateKeyStr := privateKeyMap["u"]
+	privateKeyStr := privateKeyMap["r"]
 	sk.KeyPairID = privateKeyMap["i"]
 	var privateKeyBytes []byte
-	privateKeyBytes, err = base64.RawURLEncoding.DecodeString(privateKeyStr)
+	privateKeyBytes, err = base64.URLEncoding.DecodeString(privateKeyStr)
 	if err != nil {
 		return err
 	}
-	var privateKey *ecdsa.PrivateKey
-	privateKey, err = x509.ParseECPrivateKey(privateKeyBytes)
-	if err != nil {
-		return err
-	}
+
+	var privateKeyInt big.Int
+	privateKeyInt.SetBytes(privateKeyBytes)
+
+	privateKey := new(ecdsa.PrivateKey)
+	privateKey.PublicKey.Curve = curve
+	privateKey.D = &privateKeyInt
+	privateKey.PublicKey.X, privateKey.PublicKey.Y = curve.ScalarBaseMult(privateKey.D.Bytes())
+
 	sk.PrivateKey = privateKey
 	return nil
 }
@@ -139,29 +145,37 @@ func GenerateIPrivateKey() (*IPrivateKey, error) {
 
 func (sk *IPrivateKey) SignMessage(message string) (string, error) {
 	timestamp := time.Now().Unix()
+	//timestamp := int64(20)
 	messageWithMetadata := map[string]interface{}{
 		"message":   message,
 		"timestamp": timestamp,
 		"id":        sk.KeyPairID,
 	}
+	fmt.Println(messageWithMetadata)
 	var messageJson []byte
 	var err error
 	messageJson, err = json.Marshal(messageWithMetadata)
 	if err != nil {
 		return "", err
 	}
-	hashed := sha256.Sum256(messageJson)
+	messageStr := string(messageJson)
+	hashed := sha256.Sum256([]byte(messageStr))
 	var r, s *big.Int
 	r, s, err = ecdsa.Sign(rand.Reader, sk.PrivateKey, hashed[:])
 	if err != nil {
 		return "", err
 	}
-	var signatureBytes []byte
-	signatureBytes, err = asn1.Marshal(EcdsaSignature{R: r, S: s})
+
+	var derSig []byte
+	derSig, err = asn1.Marshal(EcdsaSignature{
+		R: r,
+		S: s,
+	})
 	if err != nil {
 		return "", err
 	}
-	baseSignatureStr := base64.RawURLEncoding.EncodeToString(signatureBytes)
+
+	baseSignatureStr := base64.URLEncoding.EncodeToString(derSig)
 	fullSignatureMap := map[string]interface{}{
 		"signature": baseSignatureStr,
 		"timestamp": timestamp,
@@ -172,7 +186,9 @@ func (sk *IPrivateKey) SignMessage(message string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return base64.RawURLEncoding.EncodeToString(fullSignatureJson), nil
+	fullSignatureStr := string(fullSignatureJson)
+
+	return base64.URLEncoding.EncodeToString([]byte(fullSignatureStr)), nil
 }
 
 type EcdsaSignature struct {
@@ -189,7 +205,7 @@ func (sk *IPrivateKey) PublicKey() *IPublicKey {
 func (pk *IPublicKey) VerifySignature(message string, signature string, allowedTimeDifference int) (bool, error) {
 	var decodedSignature []byte
 	var err error
-	decodedSignature, err = base64.RawURLEncoding.DecodeString(signature)
+	decodedSignature, err = base64.URLEncoding.DecodeString(signature)
 	if err != nil {
 		return false, err
 	}
@@ -200,7 +216,7 @@ func (pk *IPublicKey) VerifySignature(message string, signature string, allowedT
 	}
 	sigTimestamp := int64(signatureMap["timestamp"].(float64))
 	var sigSignature []byte
-	sigSignature, err = base64.RawURLEncoding.DecodeString(signatureMap["signature"].(string))
+	sigSignature, err = base64.URLEncoding.DecodeString(signatureMap["signature"].(string))
 	if err != nil {
 		return false, err
 	}

@@ -1,6 +1,7 @@
 package infuzu
 
 import (
+	base "InfuzuGOSDK/infuzu/authentication/base"
 	constants "InfuzuGOSDK/infuzu/constants"
 	"encoding/base64"
 	"encoding/json"
@@ -10,8 +11,8 @@ import (
 
 const SignatureHeaderName = "Infuzu-Signature"
 
-func GenerateKeyPair() (*IKeys, error) {
-	return GenerateIKeys()
+func GenerateKeyPair() (*base.IKeys, error) {
+	return base.GenerateIKeys()
 }
 
 func GetPrivateKeyStr(privateKeyStr *string) (string, error) {
@@ -32,13 +33,13 @@ func GetPrivateKeyStr(privateKeyStr *string) (string, error) {
 	return "", errors.New("infuzu/authentication/shortcuts.go private key not found")
 }
 
-func GetPrivateKey(privateKeyStr *string) (*IPrivateKey, error) {
+func GetPrivateKey(privateKeyStr *string) (*base.IPrivateKey, error) {
 	privateKeyString, err := GetPrivateKeyStr(privateKeyStr)
 	if err != nil {
 		return nil, err
 	}
 
-	privateKey := &IPrivateKey{}
+	privateKey := &base.IPrivateKey{}
 	err = privateKey.FromBase64(privateKeyString)
 	if err != nil {
 		return nil, err
@@ -46,8 +47,8 @@ func GetPrivateKey(privateKeyStr *string) (*IPrivateKey, error) {
 	return privateKey, nil
 }
 
-func GetPublicKey(publicKeyStr string) (*IPublicKey, error) {
-	publicKey := &IPublicKey{}
+func GetPublicKey(publicKeyStr string) (*base.IPublicKey, error) {
+	publicKey := &base.IPublicKey{}
 	err := publicKey.FromBase64(publicKeyStr)
 	if err != nil {
 		return nil, err
