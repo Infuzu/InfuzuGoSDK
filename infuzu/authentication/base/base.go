@@ -111,7 +111,11 @@ func (sk *IPrivateKey) FromBase64(encoded string) error {
 	if err != nil {
 		return err
 	}
-	privateKeyStr := privateKeyMap["r"]
+	privateKeyStr, ok := privateKeyMap["r"]
+	if !ok {
+		return fmt.Errorf("missing key 'r' in private key map")
+	}
+
 	sk.KeyPairID = privateKeyMap["i"]
 	var privateKeyBytes []byte
 	privateKeyBytes, err = base64.URLEncoding.DecodeString(privateKeyStr)
@@ -119,15 +123,30 @@ func (sk *IPrivateKey) FromBase64(encoded string) error {
 		return err
 	}
 
-	var privateKeyInt big.Int
-	privateKeyInt.SetBytes(privateKeyBytes)
+	//var privateKeyInt big.Int
+	//privateKeyInt.SetBytes(privateKeyBytes)
+	//
+	//var privateKeyASN1 []byte
+	//privateKeyASN1, err = asn1.Marshal(privateKeyInt)
+	//if err != nil {
+	//	return err
+	//}
 
-	privateKey := new(ecdsa.PrivateKey)
-	privateKey.PublicKey.Curve = curve
-	privateKey.D = &privateKeyInt
-	privateKey.PublicKey.X, privateKey.PublicKey.Y = curve.ScalarBaseMult(privateKey.D.Bytes())
-
+	var privateKey *ecdsa.PrivateKey
+	privateKey, err = x509.ParseECPrivateKey(privateKeyBytes)
+	if err != nil {
+		return err
+	}
 	sk.PrivateKey = privateKey
+
+	//privateKeyInt := new(big.Int).SetBytes(privateKeyBytes)
+	//
+	//privateKey := new(ecdsa.PrivateKey)
+	//privateKey.PublicKey.Curve = curve
+	//privateKey.D = privateKeyInt
+	//privateKey.PublicKey.X, privateKey.PublicKey.Y = curve.ScalarBaseMult(privateKey.D.Bytes())
+	//
+	//sk.PrivateKey = privateKey
 	return nil
 }
 
