@@ -3,7 +3,7 @@ package infuzu
 import (
 	"errors"
 	"fmt"
-	base "github.com/infuzu/InfuzuGoSDK/infuzu/authentication/base"
+	base "github.com/infuzu/infuzu-go-sdk/infuzu/authentication/base"
 )
 
 type Application struct {

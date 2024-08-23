@@ -12,7 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gibson042/canonicaljson-go"
-	utils "github.com/infuzu/InfuzuGoSDK/infuzu/utils"
+	utils "github.com/infuzu/infuzu-go-sdk/infuzu/utils"
 	"math/big"
 	"time"
 )

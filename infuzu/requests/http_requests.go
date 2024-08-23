@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	auth "github.com/infuzu/InfuzuGoSDK/infuzu/authentication/shortcuts"
+	auth "github.com/infuzu/infuzu-go-sdk/infuzu/authentication/shortcuts"
 	"net/http"
 	"time"
 )

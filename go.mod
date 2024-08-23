@@ -1,4 +1,4 @@
-module github.com/infuzu/InfuzuGoSDK
+module github.com/infuzu/infuzu-go-sdk
 
 go 1.22
 

@@ -4,9 +4,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	base "github.com/infuzu/InfuzuGoSDK/infuzu/authentication/base"
-	constants "github.com/infuzu/InfuzuGoSDK/infuzu/constants"
-	utils "github.com/infuzu/InfuzuGoSDK/infuzu/utils"
+	base "github.com/infuzu/infuzu-go-sdk/infuzu/authentication/base"
+	constants "github.com/infuzu/infuzu-go-sdk/infuzu/constants"
+	utils "github.com/infuzu/infuzu-go-sdk/infuzu/utils"
 	"os"
 )
 
