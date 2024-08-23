@@ -1,9 +1,9 @@
 package infuzu
 
 import (
-	base "InfuzuGOSDK/infuzu/authentication/base"
 	"errors"
 	"fmt"
+	base "github.com/infuzu/InfuzuGoSDK/infuzu/authentication/base"
 )
 
 type Application struct {
