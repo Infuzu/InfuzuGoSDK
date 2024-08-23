@@ -20,12 +20,12 @@ func fetchApplicationInformation(keyID string) (*auth.AuthenticationKey, error) 
 	url := constants.IKeysBaseUrl() + strings.ReplaceAll(constants.IKeysKeyPairEndpoint(), "<str:key_id>", keyID)
 	var resp *http.Response
 	var err error
-	resp, err = requests.SignedRequest("GET", url, nil, nil, nil)
+	resp, err = requests.SignedClient.Request("GET", url, nil, nil)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
-		if cerr := resp.Body.Close(); cerr != nil {
+		if cerr := resp.Body.Close(); cerr != nil && err == nil {
 			err = fmt.Errorf("failed to close response body: %w", cerr)
 		}
 	}()
@@ -43,15 +43,16 @@ func fetchApplicationInformation(keyID string) (*auth.AuthenticationKey, error) 
 		return nil, err
 	}
 
-	_, valid := results["valid"]
-	keyInfo := results["valid"]
+	keyInfo, valid := results["valid"].(map[string]interface{})
 	if !valid {
-		keyInfo = results["invalid"]
+		keyInfo, _ = results["invalid"].(map[string]interface{})
 	}
 
-	keyInformation := keyInfo.(map[string]interface{})
-	applicationInfo := keyInformation["application"].(map[string]interface{})
-	delete(keyInformation, "application")
+	applicationInfo, ok := keyInfo["application"].(map[string]interface{})
+	if !ok {
+		return nil, errors.New("missing or invalid application info")
+	}
+	delete(keyInfo, "application")
 
 	var applicationJson []byte
 	applicationJson, err = json.Marshal(applicationInfo)
@@ -65,7 +66,7 @@ func fetchApplicationInformation(keyID string) (*auth.AuthenticationKey, error) 
 	}
 
 	var keyJson []byte
-	keyJson, err = json.Marshal(keyInformation)
+	keyJson, err = json.Marshal(keyInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +76,8 @@ func fetchApplicationInformation(keyID string) (*auth.AuthenticationKey, error) 
 		return nil, err
 	}
 	authenticationKey.Application = &application
+	authenticationKey.Valid = &valid
+
 	return &authenticationKey, nil
 }
 
