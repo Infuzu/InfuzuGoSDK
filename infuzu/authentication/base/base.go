@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gibson042/canonicaljson-go"
 	"math/big"
 	"time"
 )
@@ -123,30 +124,15 @@ func (sk *IPrivateKey) FromBase64(encoded string) error {
 		return err
 	}
 
-	//var privateKeyInt big.Int
-	//privateKeyInt.SetBytes(privateKeyBytes)
-	//
-	//var privateKeyASN1 []byte
-	//privateKeyASN1, err = asn1.Marshal(privateKeyInt)
-	//if err != nil {
-	//	return err
-	//}
+	privateKeyInt := new(big.Int).SetBytes(privateKeyBytes)
 
-	var privateKey *ecdsa.PrivateKey
-	privateKey, err = x509.ParseECPrivateKey(privateKeyBytes)
-	if err != nil {
-		return err
-	}
+	privateKey := new(ecdsa.PrivateKey)
+	privateKey.PublicKey.Curve = curve
+	privateKey.D = privateKeyInt
+	privateKey.PublicKey.X, privateKey.PublicKey.Y = curve.ScalarBaseMult(privateKey.D.Bytes())
+
 	sk.PrivateKey = privateKey
 
-	//privateKeyInt := new(big.Int).SetBytes(privateKeyBytes)
-	//
-	//privateKey := new(ecdsa.PrivateKey)
-	//privateKey.PublicKey.Curve = curve
-	//privateKey.D = privateKeyInt
-	//privateKey.PublicKey.X, privateKey.PublicKey.Y = curve.ScalarBaseMult(privateKey.D.Bytes())
-	//
-	//sk.PrivateKey = privateKey
 	return nil
 }
 
@@ -162,52 +148,97 @@ func GenerateIPrivateKey() (*IPrivateKey, error) {
 	}, nil
 }
 
-func (sk *IPrivateKey) SignMessage(message string) (string, error) {
-	timestamp := time.Now().Unix()
-	//timestamp := int64(20)
-	messageWithMetadata := map[string]interface{}{
-		"message":   message,
-		"timestamp": timestamp,
-		"id":        sk.KeyPairID,
-	}
-	fmt.Println(messageWithMetadata)
-	var messageJson []byte
-	var err error
-	messageJson, err = json.Marshal(messageWithMetadata)
-	if err != nil {
-		return "", err
-	}
-	messageStr := string(messageJson)
-	hashed := sha256.Sum256([]byte(messageStr))
-	var r, s *big.Int
-	r, s, err = ecdsa.Sign(rand.Reader, sk.PrivateKey, hashed[:])
-	if err != nil {
-		return "", err
-	}
+func (sk *IPrivateKey) SignMessage(message string, version string) (string, error) {
+	if version == "1.0" {
+		timestamp := time.Now().Unix()
+		messageWithMetadata := map[string]interface{}{
+			"id":        sk.KeyPairID,
+			"message":   message,
+			"timestamp": timestamp,
+		}
+		var messageJson []byte
+		var err error
+		messageJson, err = canonicaljson.Marshal(messageWithMetadata)
+		if err != nil {
+			return "", err
+		}
+		hashed := sha256.Sum256(messageJson)
 
-	var derSig []byte
-	derSig, err = asn1.Marshal(EcdsaSignature{
-		R: r,
-		S: s,
-	})
-	if err != nil {
-		return "", err
-	}
+		var r, s *big.Int
+		r, s, err = ecdsa.Sign(rand.Reader, sk.PrivateKey, hashed[:])
+		if err != nil {
+			return "", err
+		}
 
-	baseSignatureStr := base64.URLEncoding.EncodeToString(derSig)
-	fullSignatureMap := map[string]interface{}{
-		"signature": baseSignatureStr,
-		"timestamp": timestamp,
-		"id":        sk.KeyPairID,
-	}
-	var fullSignatureJson []byte
-	fullSignatureJson, err = json.Marshal(fullSignatureMap)
-	if err != nil {
-		return "", err
-	}
-	fullSignatureStr := string(fullSignatureJson)
+		var derSig []byte
+		derSig, err = asn1.Marshal(EcdsaSignature{
+			R: r,
+			S: s,
+		})
+		if err != nil {
+			return "", err
+		}
 
-	return base64.URLEncoding.EncodeToString([]byte(fullSignatureStr)), nil
+		baseSignatureStr := base64.URLEncoding.EncodeToString(derSig)
+		fullSignatureMap := map[string]interface{}{
+			"signature": baseSignatureStr,
+			"timestamp": timestamp,
+			"id":        sk.KeyPairID,
+		}
+		var fullSignatureJson []byte
+		fullSignatureJson, err = json.Marshal(fullSignatureMap)
+		if err != nil {
+			return "", err
+		}
+
+		return base64.URLEncoding.EncodeToString(fullSignatureJson), nil
+	} else if version == "1.2" {
+		timestamp := time.Now().Unix()
+		messageWithMetadata := map[string]interface{}{
+			"i": sk.KeyPairID,
+			"m": message,
+			"t": timestamp,
+		}
+		var messageJson []byte
+		var err error
+		messageJson, err = canonicaljson.Marshal(messageWithMetadata)
+		if err != nil {
+			return "", err
+		}
+		hashed := sha256.Sum256(messageJson)
+
+		var r, s *big.Int
+		r, s, err = ecdsa.Sign(rand.Reader, sk.PrivateKey, hashed[:])
+		if err != nil {
+			return "", err
+		}
+
+		var derSig []byte
+		derSig, err = asn1.Marshal(EcdsaSignature{
+			R: r,
+			S: s,
+		})
+		if err != nil {
+			return "", err
+		}
+
+		baseSignatureStr := base64.URLEncoding.EncodeToString(derSig)
+		fullSignatureMap := map[string]interface{}{
+			"s": baseSignatureStr,
+			"t": timestamp,
+			"i": sk.KeyPairID,
+			"v": "1.2",
+		}
+		var fullSignatureJson []byte
+		fullSignatureJson, err = json.Marshal(fullSignatureMap)
+		if err != nil {
+			return "", err
+		}
+
+		return base64.URLEncoding.EncodeToString(fullSignatureJson), nil
+	} else {
+		return "", fmt.Errorf("unsupported version: %s", version)
+	}
 }
 
 type EcdsaSignature struct {

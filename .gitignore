@@ -36,6 +36,9 @@ coverage/
 # Local go binaries
 bin/
 
+*.env
+.env
+
 # System generated files
 .DS_Store
 Thumbs.db

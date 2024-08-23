@@ -3,6 +3,7 @@ package infuzu
 import (
 	base "InfuzuGOSDK/infuzu/authentication/base"
 	constants "InfuzuGOSDK/infuzu/constants"
+	utils "InfuzuGOSDK/infuzu/utils"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -62,7 +63,7 @@ func GenerateMessageSignature(message string, privateKeyStr *string) (string, er
 		return "", err
 	}
 
-	return privateKey.SignMessage(message)
+	return privateKey.SignMessage(message, "1.2")
 }
 
 func VerifyMessageSignature(message, signature, publicKeyStr string) (bool, error) {
@@ -85,9 +86,17 @@ func GetKeyPairIDFromSignature(signature string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	if sigID, exists := signatureData["id"].(string); exists {
-		return sigID, nil
+	version := utils.GetSignatureVersion(signature)
+	if version == "1.0" {
+		if sigID, exists := signatureData["id"].(string); exists {
+			return sigID, nil
+		}
+	} else if version == "1.2" {
+		if sigID, exists := signatureData["i"].(string); exists {
+			return sigID, nil
+		}
+	} else {
+		return "", errors.New("infuzu/authentication/shortcuts.go signature version not supported")
 	}
 
 	return "", errors.New("infuzu/authentication/shortcuts.go signature id not found")
