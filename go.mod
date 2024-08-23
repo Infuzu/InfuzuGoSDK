@@ -1,5 +1,6 @@
 module github.com/infuzu/InfuzuGoSDK
 
+
 go 1.22
 
 require (
