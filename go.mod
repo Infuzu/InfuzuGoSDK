@@ -1,7 +1,6 @@
 module github.com/infuzu/InfuzuGoSDK
 
-
-go 1.22
+go 1.23.0
 
 require (
 	github.com/gibson042/canonicaljson-go v1.0.3
