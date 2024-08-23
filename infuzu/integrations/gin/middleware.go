@@ -1,9 +1,9 @@
 package infuzu
 
 import (
-	authenticate "InfuzuGOSDK/infuzu/authentication/authenticate"
-	shortcuts "InfuzuGOSDK/infuzu/authentication/shortcuts"
 	"github.com/gin-gonic/gin"
+	authenticate "github.com/infuzu/InfuzuGoSDK/infuzu/authentication/authenticate"
+	shortcuts "github.com/infuzu/InfuzuGoSDK/infuzu/authentication/shortcuts"
 	"net/http"
 )
 

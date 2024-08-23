@@ -1,10 +1,10 @@
 package infuzu
 
 import (
-	auth "InfuzuGOSDK/infuzu/authentication/shortcuts"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	auth "github.com/infuzu/InfuzuGoSDK/infuzu/authentication/shortcuts"
 	"net/http"
 	"time"
 )

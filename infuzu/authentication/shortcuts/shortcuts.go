@@ -1,12 +1,12 @@
 package infuzu
 
 import (
-	base "InfuzuGOSDK/infuzu/authentication/base"
-	constants "InfuzuGOSDK/infuzu/constants"
-	utils "InfuzuGOSDK/infuzu/utils"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	base "github.com/infuzu/InfuzuGoSDK/infuzu/authentication/base"
+	constants "github.com/infuzu/InfuzuGoSDK/infuzu/constants"
+	utils "github.com/infuzu/InfuzuGoSDK/infuzu/utils"
 	"os"
 )
 

@@ -1,7 +1,6 @@
 package infuzu
 
 import (
-	utils "InfuzuGOSDK/infuzu/utils"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -13,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gibson042/canonicaljson-go"
+	utils "github.com/infuzu/InfuzuGoSDK/infuzu/utils"
 	"math/big"
 	"time"
 )

@@ -1,11 +1,11 @@
 package infuzu
 
 import (
-	application "InfuzuGOSDK/infuzu/authentication/applications"
-	base "InfuzuGOSDK/infuzu/authentication/base"
-	requests "InfuzuGOSDK/infuzu/authentication/requests"
-	shortcuts "InfuzuGOSDK/infuzu/authentication/shortcuts"
 	"errors"
+	application "github.com/infuzu/InfuzuGoSDK/infuzu/authentication/applications"
+	base "github.com/infuzu/InfuzuGoSDK/infuzu/authentication/base"
+	requests "github.com/infuzu/InfuzuGoSDK/infuzu/authentication/requests"
+	shortcuts "github.com/infuzu/InfuzuGoSDK/infuzu/authentication/shortcuts"
 )
 
 func VerifyDiverseMessageSignature(message string, signature string, publicKey interface{}) (bool, error) {

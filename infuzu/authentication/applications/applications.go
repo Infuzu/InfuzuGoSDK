@@ -1,13 +1,13 @@
 package infuzu
 
 import (
-	auth "InfuzuGOSDK/infuzu/authentication/requests"
-	constants "InfuzuGOSDK/infuzu/constants"
-	requests "InfuzuGOSDK/infuzu/requests"
-	utils "InfuzuGOSDK/infuzu/utils"
 	"encoding/json"
 	"errors"
 	"fmt"
+	auth "github.com/infuzu/InfuzuGoSDK/infuzu/authentication/requests"
+	constants "github.com/infuzu/InfuzuGoSDK/infuzu/constants"
+	requests "github.com/infuzu/InfuzuGoSDK/infuzu/requests"
+	utils "github.com/infuzu/InfuzuGoSDK/infuzu/utils"
 	"net/http"
 	"strings"
 )

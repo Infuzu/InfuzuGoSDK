@@ -1,6 +1,6 @@
 package infuzu
 
-import utils "InfuzuGOSDK/infuzu/utils"
+import utils "github.com/infuzu/InfuzuGoSDK/infuzu/utils"
 
 var IAuthTokenHeaderName = utils.PreconfiguredGetEnv("INFUZU_AUTH_TOKEN_HEADER_NAME", "I-Auth-Token")
 
