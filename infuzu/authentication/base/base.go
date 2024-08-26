@@ -264,42 +264,90 @@ func (pk *IPublicKey) VerifySignature(message string, signature string, allowedT
 	if err != nil {
 		return false, err
 	}
-	sigTimestamp := int64(signatureMap["timestamp"].(float64))
-	var sigSignature []byte
-	sigSignature, err = base64.URLEncoding.DecodeString(signatureMap["signature"].(string))
-	if err != nil {
-		return false, err
-	}
-	sigID := signatureMap["id"].(string)
 
-	if sigID != pk.KeyPairID {
-		return false, nil
+	version, ok := signatureMap["v"].(string)
+	if !ok {
+		version = "1.0"
 	}
 
-	if time.Now().Unix()-sigTimestamp > int64(allowedTimeDifference) {
-		return false, nil
-	}
+	switch version {
+	case "1.0":
+		sigTimestamp := int64(signatureMap["timestamp"].(float64))
+		var sigSignature []byte
+		sigSignature, err = base64.URLEncoding.DecodeString(signatureMap["signature"].(string))
+		if err != nil {
+			return false, err
+		}
+		sigID := signatureMap["id"].(string)
 
-	messageWithMetadata := map[string]interface{}{
-		"message":   message,
-		"timestamp": sigTimestamp,
-		"id":        sigID,
-	}
-	var messageJson []byte
-	messageJson, err = json.Marshal(messageWithMetadata)
-	if err != nil {
-		return false, err
-	}
-	hashed := sha256.Sum256(messageJson)
+		if sigID != pk.KeyPairID {
+			return false, nil
+		}
 
-	var esig EcdsaSignature
-	_, err = asn1.Unmarshal(sigSignature, &esig)
-	if err != nil {
-		return false, err
-	}
+		if time.Now().Unix()-sigTimestamp > int64(allowedTimeDifference) {
+			return false, nil
+		}
 
-	valid := ecdsa.Verify(pk.PublicKey, hashed[:], esig.R, esig.S)
-	return valid, nil
+		messageWithMetadata := map[string]interface{}{
+			"message":   message,
+			"timestamp": sigTimestamp,
+			"id":        sigID,
+		}
+		var messageJson []byte
+		messageJson, err = json.Marshal(messageWithMetadata)
+		if err != nil {
+			return false, err
+		}
+		hashed := sha256.Sum256(messageJson)
+
+		var esig EcdsaSignature
+		_, err = asn1.Unmarshal(sigSignature, &esig)
+		if err != nil {
+			return false, err
+		}
+
+		valid := ecdsa.Verify(pk.PublicKey, hashed[:], esig.R, esig.S)
+		return valid, nil
+	case "1.2":
+		sigTimestamp := int64(signatureMap["t"].(float64))
+		var sigSignature []byte
+		sigSignature, err = base64.URLEncoding.DecodeString(signatureMap["s"].(string))
+		if err != nil {
+			return false, err
+		}
+		sigID := signatureMap["i"].(string)
+
+		if sigID != pk.KeyPairID {
+			return false, nil
+		}
+
+		if time.Now().Unix()-sigTimestamp > int64(allowedTimeDifference) {
+			return false, nil
+		}
+
+		messageWithMetadata := map[string]interface{}{
+			"m": message,
+			"t": sigTimestamp,
+			"i": sigID,
+		}
+		var messageJson []byte
+		messageJson, err = canonicaljson.Marshal(messageWithMetadata)
+		if err != nil {
+			return false, err
+		}
+		hashed := sha256.Sum256(messageJson)
+
+		var esig EcdsaSignature
+		_, err = asn1.Unmarshal(sigSignature, &esig)
+		if err != nil {
+			return false, err
+		}
+
+		valid := ecdsa.Verify(pk.PublicKey, hashed[:], esig.R, esig.S)
+		return valid, nil
+	default:
+		return false, fmt.Errorf("unsupported version: %s", version)
+	}
 }
 
 type IKeys struct {

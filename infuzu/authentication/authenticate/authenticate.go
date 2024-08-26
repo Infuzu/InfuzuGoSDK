@@ -2,10 +2,12 @@ package infuzu
 
 import (
 	"errors"
+	"fmt"
 	application "github.com/infuzu/infuzu-go-sdk/infuzu/authentication/applications"
 	base "github.com/infuzu/infuzu-go-sdk/infuzu/authentication/base"
 	requests "github.com/infuzu/infuzu-go-sdk/infuzu/authentication/requests"
 	shortcuts "github.com/infuzu/infuzu-go-sdk/infuzu/authentication/shortcuts"
+	"reflect"
 )
 
 func VerifyDiverseMessageSignature(message string, signature string, publicKey interface{}) (bool, error) {
@@ -23,15 +25,12 @@ func VerifyDiverseMessageSignature(message string, signature string, publicKey i
 		if err != nil {
 			return false, err
 		}
-	case base.IKeys:
-		publicKeyB64, err = pk.PublicKey.ToBase64()
-		if err != nil {
-			return false, err
-		}
+	case *string:
+		publicKeyB64 = *pk
 	case string:
 		publicKeyB64 = pk
 	default:
-		return false, errors.New("public key must be of the type AuthenticationKey, IPublicKey IKeys, or string")
+		return false, errors.New(fmt.Sprintf("public key must be of the type AuthenticationKey, IPublicKey IKeys, or string. Instead got %s", reflect.TypeOf(publicKey)))
 	}
 
 	if publicKeyB64 == "" {
@@ -57,6 +56,7 @@ func ConvertMessageSignatureToApplicationAndVerify(signature string, message str
 	if err != nil {
 		return nil, err
 	}
+
 	if authenticationKey.PublicKeyB64 == nil {
 		return nil, errors.New("invalid public key base64")
 	}

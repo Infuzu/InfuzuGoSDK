@@ -10,7 +10,7 @@ type Application struct {
 	ID          *string `json:"id"`
 	Name        *string `json:"name"`
 	Description *string `json:"description,omitempty"`
-	IsInternal  *bool   `json:"isInternal,omitempty"`
+	IsInternal  *bool   `json:"is_internal,omitempty"`
 }
 
 func (a Application) String() string {
@@ -21,8 +21,8 @@ type AuthenticationKey struct {
 	Valid          *bool        `json:"valid"`
 	ID             *string      `json:"id"`
 	Name           *string      `json:"name"`
-	PublicKeyB64   *string      `json:"publicKeyB64"`
-	PrivateKeyHash *string      `json:"privateKeyHash,omitempty"`
+	PublicKeyB64   *string      `json:"public_key_b64"`
+	PrivateKeyHash *string      `json:"private_key_hash,omitempty"`
 	Application    *Application `json:"application,omitempty"`
 }
 

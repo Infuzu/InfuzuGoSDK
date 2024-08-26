@@ -76,7 +76,7 @@ func VerifyMessageSignature(message, signature, publicKeyStr string) (bool, erro
 }
 
 func GetKeyPairIDFromSignature(signature string) (string, error) {
-	decodedSignature, err := base64.RawURLEncoding.DecodeString(signature)
+	decodedSignature, err := base64.URLEncoding.DecodeString(signature)
 	if err != nil {
 		return "", err
 	}
